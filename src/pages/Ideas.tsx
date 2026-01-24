@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Video, Image, LayoutGrid, Megaphone, BookOpen, Plus, RefreshCw } from "lucide-react";
+import { Sparkles, Video, Image, LayoutGrid, Megaphone, BookOpen, Plus, RefreshCw, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CampaignPlanner } from "@/components/CampaignPlanner";
 
 const categories = [
   { id: "all", label: "All Ideas", icon: Sparkles },
@@ -52,7 +53,10 @@ const ideas = [
   },
 ];
 
+const tabs = ["Ideas", "Campaigns"];
+
 const Ideas = () => {
+  const [activeTab, setActiveTab] = useState("Ideas");
   const [activeCategory, setActiveCategory] = useState("all");
 
   const filteredIdeas = activeCategory === "all" 
@@ -75,79 +79,117 @@ const Ideas = () => {
           </Button>
         </div>
 
-        {/* Categories */}
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-6 pb-2">
-          {categories.map((cat) => (
+        {/* Tabs */}
+        <div className="flex gap-2 mb-6">
+          {tabs.map((tab) => (
             <button
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
+              key={tab}
+              onClick={() => setActiveTab(tab)}
               className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-300",
-                activeCategory === cat.id
+                "flex-1 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 flex items-center justify-center gap-2",
+                activeTab === tab
                   ? "gradient-primary text-primary-foreground"
-                  : "bg-card border border-border hover:border-primary/50"
+                  : "bg-card border border-border"
               )}
             >
-              <cat.icon className="w-4 h-4" />
-              {cat.label}
+              {tab === "Campaigns" && <Target className="w-4 h-4" />}
+              {tab}
             </button>
           ))}
         </div>
 
-        {/* Ideas Grid */}
-        <div className="space-y-4">
-          {filteredIdeas.map((idea) => (
-            <div 
-              key={idea.id}
-              className="p-5 rounded-xl bg-card border border-border hover:border-primary/30 transition-all duration-300"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-primary uppercase bg-primary/10 px-2 py-1 rounded-md">
-                    {idea.type}
-                  </span>
-                  {idea.trending && (
-                    <span className="text-xs font-medium text-yellow-400 bg-yellow-400/10 px-2 py-1 rounded-md flex items-center gap-1">
-                      🔥 Trending
-                    </span>
+        {activeTab === "Ideas" && (
+          <>
+            {/* Categories */}
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-6 pb-2">
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setActiveCategory(cat.id)}
+                  className={cn(
+                    "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-300",
+                    activeCategory === cat.id
+                      ? "gradient-primary text-primary-foreground"
+                      : "bg-card border border-border hover:border-primary/50"
                   )}
-                </div>
-              </div>
-
-              <h3 className="font-semibold text-lg mb-3">{idea.title}</h3>
-
-              <div className="space-y-2 text-sm">
-                <div className="flex items-start gap-2">
-                  <span className="text-primary font-medium min-w-[60px]">Hook:</span>
-                  <span className="text-muted-foreground">{idea.hook}</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-primary font-medium min-w-[60px]">Flow:</span>
-                  <span className="text-muted-foreground">{idea.structure}</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-primary font-medium min-w-[60px]">CTA:</span>
-                  <span className="text-muted-foreground">{idea.cta}</span>
-                </div>
-              </div>
-
-              <div className="flex gap-2 mt-4">
-                <Button variant="gradient" size="sm" className="flex-1">
-                  Use This Idea
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Plus className="w-4 h-4" />
-                </Button>
-              </div>
+                >
+                  <cat.icon className="w-4 h-4" />
+                  {cat.label}
+                </button>
+              ))}
             </div>
-          ))}
-        </div>
 
-        {/* Generate More */}
-        <Button variant="outline" size="lg" className="w-full mt-6">
-          <RefreshCw className="w-5 h-5 mr-2" />
-          Generate More Ideas
-        </Button>
+            {/* Ideas Grid */}
+            <div className="space-y-4">
+              {filteredIdeas.map((idea) => (
+                <div 
+                  key={idea.id}
+                  className="p-5 rounded-xl bg-card border border-border hover:border-primary/30 transition-all duration-300"
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-primary uppercase bg-primary/10 px-2 py-1 rounded-md">
+                        {idea.type}
+                      </span>
+                      {idea.trending && (
+                        <span className="text-xs font-medium text-yellow-400 bg-yellow-400/10 px-2 py-1 rounded-md flex items-center gap-1">
+                          🔥 Trending
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <h3 className="font-semibold text-lg mb-3">{idea.title}</h3>
+
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-start gap-2">
+                      <span className="text-primary font-medium min-w-[60px]">Hook:</span>
+                      <span className="text-muted-foreground">{idea.hook}</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="text-primary font-medium min-w-[60px]">Flow:</span>
+                      <span className="text-muted-foreground">{idea.structure}</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="text-primary font-medium min-w-[60px]">CTA:</span>
+                      <span className="text-muted-foreground">{idea.cta}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 mt-4">
+                    <Button variant="gradient" size="sm" className="flex-1">
+                      Use This Idea
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Generate More */}
+            <Button variant="outline" size="lg" className="w-full mt-6">
+              <RefreshCw className="w-5 h-5 mr-2" />
+              Generate More Ideas
+            </Button>
+          </>
+        )}
+
+        {activeTab === "Campaigns" && (
+          <div>
+            <div className="p-4 rounded-xl bg-primary/10 border border-primary/30 mb-6">
+              <div className="flex items-center gap-2 mb-2">
+                <Target className="w-5 h-5 text-primary" />
+                <span className="font-semibold">Campaign Planner</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Create targeted campaigns based on your audience demographics, location, and budget.
+              </p>
+            </div>
+            <CampaignPlanner />
+          </div>
+        )}
       </div>
     </AppLayout>
   );
