@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Building2, Target, Smartphone, BarChart } from "lucide-react";
+import { ArrowRight, Building2, Target, Smartphone, BarChart, User, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useUser } from "@/contexts/UserContext";
 
 const industries = [
   "Cafe / Restaurant",
@@ -36,16 +37,26 @@ const experienceLevels = [
   { id: "advanced", label: "Advanced", desc: "Very experienced" },
 ];
 
+const teamSizes = [
+  { id: "solo", label: "Solo (1)", desc: "Just me" },
+  { id: "small", label: "2–10", desc: "Small team" },
+  { id: "medium", label: "10–50", desc: "Growing team" },
+  { id: "large", label: "50+", desc: "Large organization" },
+];
+
 const Onboarding = () => {
   const navigate = useNavigate();
+  const { setUserData } = useUser();
   const [step, setStep] = useState(1);
+  const [firstName, setFirstName] = useState("");
   const [businessName, setBusinessName] = useState("");
+  const [teamSize, setTeamSize] = useState("");
   const [industry, setIndustry] = useState("");
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [experience, setExperience] = useState("");
 
-  const totalSteps = 5;
+  const totalSteps = 6;
 
   const toggleGoal = (goalId: string) => {
     setSelectedGoals(prev => 
@@ -65,11 +76,12 @@ const Onboarding = () => {
 
   const canProceed = () => {
     switch (step) {
-      case 1: return businessName.trim().length > 0;
-      case 2: return industry.length > 0;
-      case 3: return selectedGoals.length > 0;
-      case 4: return selectedPlatforms.length > 0;
-      case 5: return experience.length > 0;
+      case 1: return firstName.trim().length > 0 && businessName.trim().length > 0;
+      case 2: return teamSize.length > 0;
+      case 3: return industry.length > 0;
+      case 4: return selectedGoals.length > 0;
+      case 5: return selectedPlatforms.length > 0;
+      case 6: return experience.length > 0;
       default: return false;
     }
   };
@@ -78,6 +90,16 @@ const Onboarding = () => {
     if (step < totalSteps) {
       setStep(step + 1);
     } else {
+      // Save user data
+      setUserData({
+        firstName,
+        companyName: businessName,
+        teamSize,
+        industry,
+        goals: selectedGoals,
+        platforms: selectedPlatforms,
+        experience,
+      });
       navigate("/dashboard");
     }
   };
@@ -106,28 +128,78 @@ const Onboarding = () => {
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[300px] h-[300px] gradient-primary opacity-10 blur-[100px] rounded-full pointer-events-none" />
 
       <div className="flex-1 flex flex-col max-w-sm mx-auto w-full">
-        {/* Step 1: Business Name */}
+        {/* Step 1: Name & Business */}
         {step === 1 && (
+          <div className="animate-fade-in">
+            <div className="w-14 h-14 rounded-2xl gradient-primary flex items-center justify-center mb-6">
+              <User className="w-7 h-7 text-primary-foreground" />
+            </div>
+            <h1 className="text-2xl font-bold mb-2">Let's get to know you</h1>
+            <p className="text-muted-foreground mb-8">
+              Tell us about yourself and your business
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Your First Name</label>
+                <Input
+                  placeholder="Enter your first name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">Business Name</label>
+                <Input
+                  placeholder="Enter your business name"
+                  value={businessName}
+                  onChange={(e) => setBusinessName(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: Team Size */}
+        {step === 2 && (
+          <div className="animate-fade-in">
+            <div className="w-14 h-14 rounded-2xl gradient-primary flex items-center justify-center mb-6">
+              <Users className="w-7 h-7 text-primary-foreground" />
+            </div>
+            <h1 className="text-2xl font-bold mb-2">How big is your team?</h1>
+            <p className="text-muted-foreground mb-8">
+              This helps us personalize recommendations
+            </p>
+            <div className="space-y-3">
+              {teamSizes.map((size) => (
+                <button
+                  key={size.id}
+                  onClick={() => setTeamSize(size.id)}
+                  className={cn(
+                    "w-full p-4 rounded-xl text-left transition-all duration-300",
+                    teamSize === size.id
+                      ? "gradient-primary text-primary-foreground glow-subtle"
+                      : "bg-card border border-border hover:border-primary/50"
+                  )}
+                >
+                  <span className="font-medium block">{size.label}</span>
+                  <span className={cn(
+                    "text-sm",
+                    teamSize === size.id ? "text-primary-foreground/80" : "text-muted-foreground"
+                  )}>
+                    {size.desc}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Industry */}
+        {step === 3 && (
           <div className="animate-fade-in">
             <div className="w-14 h-14 rounded-2xl gradient-primary flex items-center justify-center mb-6">
               <Building2 className="w-7 h-7 text-primary-foreground" />
             </div>
-            <h1 className="text-2xl font-bold mb-2">What's your business name?</h1>
-            <p className="text-muted-foreground mb-8">
-              We'll personalize your experience based on this
-            </p>
-            <Input
-              placeholder="Enter your business name"
-              value={businessName}
-              onChange={(e) => setBusinessName(e.target.value)}
-              className="mb-4"
-            />
-          </div>
-        )}
-
-        {/* Step 2: Industry */}
-        {step === 2 && (
-          <div className="animate-fade-in">
             <h1 className="text-2xl font-bold mb-2">What industry are you in?</h1>
             <p className="text-muted-foreground mb-8">
               This helps us tailor content ideas and trends for you
@@ -151,8 +223,8 @@ const Onboarding = () => {
           </div>
         )}
 
-        {/* Step 3: Goals */}
-        {step === 3 && (
+        {/* Step 4: Goals */}
+        {step === 4 && (
           <div className="animate-fade-in">
             <h1 className="text-2xl font-bold mb-2">What's your main goal?</h1>
             <p className="text-muted-foreground mb-8">
@@ -178,8 +250,8 @@ const Onboarding = () => {
           </div>
         )}
 
-        {/* Step 4: Platforms */}
-        {step === 4 && (
+        {/* Step 5: Platforms */}
+        {step === 5 && (
           <div className="animate-fade-in">
             <h1 className="text-2xl font-bold mb-2">Which platforms do you use?</h1>
             <p className="text-muted-foreground mb-8">
@@ -207,8 +279,8 @@ const Onboarding = () => {
           </div>
         )}
 
-        {/* Step 5: Experience */}
-        {step === 5 && (
+        {/* Step 6: Experience */}
+        {step === 6 && (
           <div className="animate-fade-in">
             <h1 className="text-2xl font-bold mb-2">What's your experience level?</h1>
             <p className="text-muted-foreground mb-8">

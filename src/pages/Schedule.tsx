@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, Plus, Settings2, Video, Image, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, Clock, Plus, Settings2, Video, Image, ChevronLeft, ChevronRight, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, getDay, startOfWeek, endOfWeek } from "date-fns";
 
 const scheduledPosts = [
   {
@@ -14,7 +13,7 @@ const scheduledPosts = [
     type: "video",
     time: "9:00 AM",
     status: "scheduled",
-    day: 1,
+    date: new Date(2026, 0, 20),
   },
   {
     id: 2,
@@ -23,7 +22,7 @@ const scheduledPosts = [
     type: "video",
     time: "2:00 PM",
     status: "scheduled",
-    day: 1,
+    date: new Date(2026, 0, 20),
   },
   {
     id: 3,
@@ -32,7 +31,7 @@ const scheduledPosts = [
     type: "image",
     time: "11:00 AM",
     status: "draft",
-    day: 3,
+    date: new Date(2026, 0, 22),
   },
   {
     id: 4,
@@ -41,8 +40,23 @@ const scheduledPosts = [
     type: "video",
     time: "4:00 PM",
     status: "scheduled",
-    day: 5,
+    date: new Date(2026, 0, 24),
   },
+  {
+    id: 5,
+    title: "Weekend Promo",
+    platform: "instagram",
+    type: "image",
+    time: "10:00 AM",
+    status: "scheduled",
+    date: new Date(2026, 0, 25),
+  },
+];
+
+const savedIdeas = [
+  { id: 1, title: "Behind-the-scenes coffee making", type: "reels" },
+  { id: 2, title: "5 Coffee Facts Your Customers Don't Know", type: "carousel" },
+  { id: 3, title: "This or That: Coffee Edition", type: "stories" },
 ];
 
 const autoScheduleRules = [
@@ -52,10 +66,22 @@ const autoScheduleRules = [
 ];
 
 const Schedule = () => {
-  const [viewMode, setViewMode] = useState<"weekly" | "monthly">("weekly");
-  const [selectedDay, setSelectedDay] = useState(1);
+  const [viewMode, setViewMode] = useState<"weekly" | "monthly">("monthly");
+  const [currentMonth, setCurrentMonth] = useState(new Date(2026, 0, 1));
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date(2026, 0, 20));
+  const [showIdeasDrawer, setShowIdeasDrawer] = useState(false);
 
-  const dayPosts = scheduledPosts.filter(post => post.day === selectedDay);
+  const monthStart = startOfMonth(currentMonth);
+  const monthEnd = endOfMonth(currentMonth);
+  const calendarStart = startOfWeek(monthStart);
+  const calendarEnd = endOfWeek(monthEnd);
+  const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+
+  const dayPosts = scheduledPosts.filter(post => isSameDay(post.date, selectedDate));
+
+  const getPostsForDay = (date: Date) => {
+    return scheduledPosts.filter(post => isSameDay(post.date, date));
+  };
 
   return (
     <AppLayout>
@@ -68,10 +94,15 @@ const Schedule = () => {
               Plan and schedule your content
             </p>
           </div>
-          <Button variant="gradient" size="sm">
-            <Plus className="w-4 h-4 mr-1" />
-            New Post
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="icon" onClick={() => setShowIdeasDrawer(!showIdeasDrawer)}>
+              <Lightbulb className="w-4 h-4" />
+            </Button>
+            <Button variant="gradient" size="sm">
+              <Plus className="w-4 h-4 mr-1" />
+              New Post
+            </Button>
+          </div>
         </div>
 
         {/* View Toggle */}
@@ -100,52 +131,148 @@ const Schedule = () => {
           </button>
         </div>
 
-        {/* Week Navigation */}
+        {/* Ideas Drawer */}
+        {showIdeasDrawer && (
+          <div className="mb-6 p-4 rounded-xl bg-card border border-primary/30 animate-fade-in">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Lightbulb className="w-5 h-5 text-primary" />
+                <span className="font-semibold">Saved Ideas</span>
+              </div>
+              <button onClick={() => setShowIdeasDrawer(false)} className="text-muted-foreground">
+                ✕
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">Click an idea to add it to {format(selectedDate, "MMM d")}</p>
+            <div className="space-y-2">
+              {savedIdeas.map((idea) => (
+                <button
+                  key={idea.id}
+                  className="w-full p-3 rounded-lg bg-muted/50 hover:bg-primary/20 transition-colors text-left flex items-center justify-between"
+                >
+                  <div>
+                    <p className="text-sm font-medium">{idea.title}</p>
+                    <span className="text-xs text-muted-foreground uppercase">{idea.type}</span>
+                  </div>
+                  <Plus className="w-4 h-4 text-primary" />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Month Navigation */}
         <div className="flex items-center justify-between mb-4">
-          <button className="p-2 rounded-lg bg-card border border-border hover:border-primary/50 transition-colors">
+          <button 
+            onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+            className="p-2 rounded-lg bg-card border border-border hover:border-primary/50 transition-colors"
+          >
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <span className="font-semibold">Jan 20 - Jan 26</span>
-          <button className="p-2 rounded-lg bg-card border border-border hover:border-primary/50 transition-colors">
+          <span className="font-semibold">{format(currentMonth, "MMMM yyyy")}</span>
+          <button 
+            onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+            className="p-2 rounded-lg bg-card border border-border hover:border-primary/50 transition-colors"
+          >
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Week Days */}
-        <div className="grid grid-cols-7 gap-2 mb-6">
-          {weekDays.map((day, i) => {
-            const dayNumber = i + 1;
-            const hasPosts = scheduledPosts.some(post => post.day === dayNumber);
-            const isSelected = selectedDay === dayNumber;
-            
-            return (
-              <button
-                key={day}
-                onClick={() => setSelectedDay(dayNumber)}
-                className={cn(
-                  "flex flex-col items-center py-3 rounded-xl transition-all duration-300",
-                  isSelected
-                    ? "gradient-primary text-primary-foreground"
-                    : "bg-card border border-border hover:border-primary/50"
-                )}
-              >
-                <span className="text-xs text-inherit opacity-70">{day}</span>
-                <span className="text-lg font-semibold">{20 + i}</span>
-                {hasPosts && (
-                  <div className={cn(
-                    "w-1.5 h-1.5 rounded-full mt-1",
-                    isSelected ? "bg-white" : "bg-primary"
-                  )} />
-                )}
-              </button>
-            );
-          })}
-        </div>
+        {viewMode === "monthly" && (
+          <>
+            {/* Calendar Grid */}
+            <div className="mb-6">
+              {/* Weekday Headers */}
+              <div className="grid grid-cols-7 gap-1 mb-2">
+                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+                  <div key={day} className="text-center text-xs text-muted-foreground py-2">
+                    {day}
+                  </div>
+                ))}
+              </div>
+              
+              {/* Calendar Days */}
+              <div className="grid grid-cols-7 gap-1">
+                {calendarDays.map((day) => {
+                  const dayPosts = getPostsForDay(day);
+                  const isCurrentMonth = isSameMonth(day, currentMonth);
+                  const isSelected = isSameDay(day, selectedDate);
+                  
+                  return (
+                    <button
+                      key={day.toISOString()}
+                      onClick={() => setSelectedDate(day)}
+                      className={cn(
+                        "relative aspect-square rounded-lg flex flex-col items-center justify-center transition-all",
+                        isCurrentMonth ? "bg-card" : "bg-card/30",
+                        isSelected && "gradient-primary text-white",
+                        !isSelected && isCurrentMonth && "hover:border-primary/50 border border-transparent hover:border"
+                      )}
+                    >
+                      <span className={cn(
+                        "text-sm font-medium",
+                        !isCurrentMonth && !isSelected && "text-muted-foreground/50"
+                      )}>
+                        {format(day, "d")}
+                      </span>
+                      {dayPosts.length > 0 && (
+                        <div className="flex gap-0.5 mt-1">
+                          {dayPosts.slice(0, 3).map((_, i) => (
+                            <div 
+                              key={i}
+                              className={cn(
+                                "w-1 h-1 rounded-full",
+                                isSelected ? "bg-white" : "bg-primary"
+                              )} 
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </>
+        )}
+
+        {viewMode === "weekly" && (
+          <div className="grid grid-cols-7 gap-2 mb-6">
+            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, i) => {
+              const dayNumber = i + 20;
+              const date = new Date(2026, 0, dayNumber);
+              const hasPosts = scheduledPosts.some(post => isSameDay(post.date, date));
+              const isSelected = isSameDay(date, selectedDate);
+              
+              return (
+                <button
+                  key={day}
+                  onClick={() => setSelectedDate(date)}
+                  className={cn(
+                    "flex flex-col items-center py-3 rounded-xl transition-all duration-300",
+                    isSelected
+                      ? "gradient-primary text-primary-foreground"
+                      : "bg-card border border-border hover:border-primary/50"
+                  )}
+                >
+                  <span className="text-xs text-inherit opacity-70">{day}</span>
+                  <span className="text-lg font-semibold">{dayNumber}</span>
+                  {hasPosts && (
+                    <div className={cn(
+                      "w-1.5 h-1.5 rounded-full mt-1",
+                      isSelected ? "bg-white" : "bg-primary"
+                    )} />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Selected Day Posts */}
         <div className="mb-6">
           <h2 className="text-lg font-semibold mb-4">
-            {weekDays[selectedDay - 1]}, Jan {20 + selectedDay - 1}
+            {format(selectedDate, "EEEE, MMM d")}
           </h2>
           
           {dayPosts.length > 0 ? (
@@ -231,7 +358,7 @@ const Schedule = () => {
         <div className="mt-4 p-4 rounded-xl bg-primary/10 border border-primary/30">
           <p className="text-sm font-medium mb-1">💡 Best Times to Post</p>
           <p className="text-xs text-muted-foreground">
-            Based on your audience: <strong className="text-foreground">9-11 AM</strong> and <strong className="text-foreground">7-9 PM</strong> get the most engagement
+            Based on your audience: <strong className="text-foreground">9-11 AM</strong> and <strong className="text-foreground">7-9 PM</strong> on <strong className="text-foreground">Tuesday-Thursday</strong> get the most engagement
           </p>
         </div>
       </div>
