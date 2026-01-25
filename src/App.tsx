@@ -10,9 +10,9 @@ import Signup from "./pages/Signup";
 import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
 import Analyze from "./pages/Analyze";
-import Performance from "./pages/Performance";
 import Ideas from "./pages/Ideas";
 import Schedule from "./pages/Schedule";
+import Team from "./pages/Team";
 import NotFound from "./pages/NotFound";
 import { FloatingAIButton } from "./components/FloatingAIButton";
 
@@ -32,9 +32,9 @@ const App = () => (
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/analyze" element={<Analyze />} />
-            <Route path="/performance" element={<Performance />} />
             <Route path="/ideas" element={<Ideas />} />
             <Route path="/schedule" element={<Schedule />} />
+            <Route path="/team" element={<Team />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <FloatingAIButton />
