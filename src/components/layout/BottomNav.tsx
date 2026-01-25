@@ -1,13 +1,13 @@
-import { Home, Scan, BarChart3, Lightbulb, Calendar } from "lucide-react";
+import { Home, Scan, Lightbulb, Calendar, Users } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { icon: Home, label: "Home", path: "/dashboard" },
   { icon: Scan, label: "Analyze", path: "/analyze" },
-  { icon: BarChart3, label: "Performance", path: "/performance" },
   { icon: Lightbulb, label: "Ideas", path: "/ideas" },
   { icon: Calendar, label: "Schedule", path: "/schedule" },
+  { icon: Users, label: "Team", path: "/team" },
 ];
 
 export const BottomNav = () => {
