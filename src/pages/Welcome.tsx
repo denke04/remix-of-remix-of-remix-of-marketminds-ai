@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { BrainIcon } from "@/components/icons/BrainIcon";
+import { MarketMindIcon } from "@/components/icons/MarketMindIcon";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, TrendingUp, Calendar, CheckCircle } from "lucide-react";
 
@@ -22,7 +22,7 @@ const Welcome = () => {
         <div className="mb-8 animate-float">
           <div className="relative">
             <div className="absolute inset-0 gradient-primary opacity-30 blur-xl rounded-full" />
-            <BrainIcon className="w-20 h-20 relative z-10" />
+            <MarketMindIcon className="w-20 h-20 relative z-10" />
           </div>
         </div>
 

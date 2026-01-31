@@ -12,7 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Analyze from "./pages/Analyze";
 import Ideas from "./pages/Ideas";
 import Schedule from "./pages/Schedule";
-import Team from "./pages/Team";
+import Create from "./pages/Create";
 import NotFound from "./pages/NotFound";
 import { FloatingAIButton } from "./components/FloatingAIButton";
 
@@ -34,7 +34,7 @@ const App = () => (
             <Route path="/analyze" element={<Analyze />} />
             <Route path="/ideas" element={<Ideas />} />
             <Route path="/schedule" element={<Schedule />} />
-            <Route path="/team" element={<Team />} />
+            <Route path="/create" element={<Create />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <FloatingAIButton />
