@@ -1,4 +1,4 @@
-import { Home, Scan, Lightbulb, Calendar, Users } from "lucide-react";
+import { Home, Scan, Lightbulb, Calendar, PenTool } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -7,7 +7,7 @@ const navItems = [
   { icon: Scan, label: "Analyze", path: "/analyze" },
   { icon: Lightbulb, label: "Ideas", path: "/ideas" },
   { icon: Calendar, label: "Schedule", path: "/schedule" },
-  { icon: Users, label: "Team", path: "/team" },
+  { icon: PenTool, label: "Create", path: "/create" },
 ];
 
 export const BottomNav = () => {

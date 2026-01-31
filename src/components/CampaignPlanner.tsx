@@ -1,214 +1,504 @@
 import { useState } from "react";
-import { Target, MapPin, Users, DollarSign, Clock, TrendingUp, Sparkles } from "lucide-react";
+import { Target, MapPin, Users, DollarSign, Clock, TrendingUp, Sparkles, Calendar, ChevronRight, ChevronLeft, Instagram, Video, Facebook } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { format, differenceInDays, addDays } from "date-fns";
 
-const ageRanges = ["18-24", "25-34", "35-44", "45-54", "55+"];
-const interests = [
-  "Coffee & Cafes",
-  "Restaurants",
-  "Art & Design",
-  "Fitness",
-  "Fashion",
-  "Technology",
-  "Travel",
-  "Food & Cooking",
+const objectives = [
+  { id: "awareness", label: "Brand Awareness", description: "Increase visibility and reach" },
+  { id: "engagement", label: "Engagement", description: "Boost likes, comments, shares" },
+  { id: "traffic", label: "Website Traffic", description: "Drive visits to your site" },
+  { id: "sales", label: "Sales & Conversions", description: "Generate purchases or signups" },
+  { id: "followers", label: "Grow Followers", description: "Increase your audience" },
 ];
 
-const suggestedCampaigns = [
-  {
-    id: 1,
-    title: "Local Coffee Lovers Campaign",
-    concept: "Target coffee enthusiasts within 3 miles with behind-the-scenes content and exclusive offers",
-    audience: "25-44, Coffee & Cafe lovers",
-    duration: "5 days",
-    budget: "$70",
-    effectiveness: 85,
-  },
-  {
-    id: 2,
-    title: "Weekend Brunch Push",
-    concept: "Promote weekend brunch specials to foodies and families in your area",
-    audience: "25-54, Food & Restaurants",
-    duration: "7 days",
-    budget: "$120",
-    effectiveness: 78,
-  },
-  {
-    id: 3,
-    title: "New Customer Welcome",
-    concept: "First-time visitor discount campaign to attract new local customers",
-    audience: "18-44, All interests",
-    duration: "14 days",
-    budget: "$200",
-    effectiveness: 92,
-  },
+const timeSlots = [
+  "9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", 
+  "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", 
+  "5:00 PM", "6:00 PM", "7:00 PM", "8:00 PM"
 ];
+
+type CampaignStep = "objective" | "timeframe" | "schedule" | "budget" | "results";
+
+interface CampaignData {
+  objective: string;
+  startDate: Date | undefined;
+  endDate: Date | undefined;
+  postingDays: string[];
+  postingTime: string;
+  budget: string;
+}
+
+interface GeneratedCampaign {
+  dailyBudget: string;
+  totalPosts: number;
+  platforms: string[];
+  ageRange: string;
+  radius: string;
+  ideas: {
+    day: number;
+    type: string;
+    title: string;
+    description: string;
+    budget: string;
+  }[];
+}
 
 export const CampaignPlanner = () => {
-  const [selectedAges, setSelectedAges] = useState<string[]>(["25-34"]);
-  const [selectedInterests, setSelectedInterests] = useState<string[]>(["Coffee & Cafes"]);
-  const [radius, setRadius] = useState("3");
-  const [budget, setBudget] = useState("100");
-  const [showResults, setShowResults] = useState(false);
+  const [step, setStep] = useState<CampaignStep>("objective");
+  const [campaignData, setCampaignData] = useState<CampaignData>({
+    objective: "",
+    startDate: undefined,
+    endDate: undefined,
+    postingDays: ["Mon", "Wed", "Fri"],
+    postingTime: "12:00 PM",
+    budget: "100",
+  });
+  const [generatedCampaign, setGeneratedCampaign] = useState<GeneratedCampaign | null>(null);
 
-  const toggleAge = (age: string) => {
-    setSelectedAges((prev) =>
-      prev.includes(age) ? prev.filter((a) => a !== age) : [...prev, age]
-    );
+  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+  const toggleDay = (day: string) => {
+    setCampaignData(prev => ({
+      ...prev,
+      postingDays: prev.postingDays.includes(day)
+        ? prev.postingDays.filter(d => d !== day)
+        : [...prev.postingDays, day]
+    }));
   };
 
-  const toggleInterest = (interest: string) => {
-    setSelectedInterests((prev) =>
-      prev.includes(interest)
-        ? prev.filter((i) => i !== interest)
-        : [...prev, interest]
-    );
+  const generateCampaign = () => {
+    const numDays = campaignData.startDate && campaignData.endDate
+      ? differenceInDays(campaignData.endDate, campaignData.startDate) + 1
+      : 7;
+    
+    const budgetNum = parseInt(campaignData.budget) || 100;
+    const postsCount = Math.min(numDays, campaignData.postingDays.length * Math.ceil(numDays / 7));
+    const dailyBudget = (budgetNum / numDays).toFixed(2);
+
+    // Generate content ideas based on objective
+    const ideas = [];
+    for (let i = 0; i < Math.min(postsCount, 5); i++) {
+      const postDate = campaignData.startDate ? addDays(campaignData.startDate, i * Math.floor(numDays / postsCount)) : new Date();
+      
+      let contentType = "Post";
+      let title = "";
+      let description = "";
+      
+      switch (campaignData.objective) {
+        case "awareness":
+          contentType = i % 2 === 0 ? "Reel" : "Story";
+          title = i === 0 ? "Brand Introduction" : i === 1 ? "Behind the Scenes" : `Day ${i + 1} Highlight`;
+          description = "Focus on visual storytelling to maximize reach";
+          break;
+        case "engagement":
+          contentType = i % 3 === 0 ? "Poll" : i % 3 === 1 ? "Question" : "Interactive Post";
+          title = i === 0 ? "Ask Your Audience" : i === 1 ? "This or That" : `Engagement ${i + 1}`;
+          description = "Use CTAs and interactive elements";
+          break;
+        case "traffic":
+          contentType = "Link Post";
+          title = i === 0 ? "Feature Highlight" : `Traffic Driver ${i + 1}`;
+          description = "Include clear link in bio CTA";
+          break;
+        case "sales":
+          contentType = i % 2 === 0 ? "Promo Post" : "Carousel";
+          title = i === 0 ? "Limited Offer" : i === 1 ? "Product Showcase" : `Sale Push ${i + 1}`;
+          description = "Urgency-driven content with clear offers";
+          break;
+        default:
+          contentType = "Reel";
+          title = `Content ${i + 1}`;
+          description = "Optimized for follower growth";
+      }
+
+      ideas.push({
+        day: i + 1,
+        type: contentType,
+        title,
+        description,
+        budget: `$${(budgetNum / postsCount).toFixed(0)}`,
+      });
+    }
+
+    setGeneratedCampaign({
+      dailyBudget: `$${dailyBudget}`,
+      totalPosts: postsCount,
+      platforms: ["Instagram", "TikTok", "Facebook"],
+      ageRange: campaignData.objective === "sales" ? "25-44" : "18-35",
+      radius: "5 miles",
+      ideas,
+    });
+
+    setStep("results");
   };
 
-  const handleGenerate = () => {
-    setShowResults(true);
-  };
-
-  if (showResults) {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="font-semibold">Recommended Campaigns</h3>
-          <Button variant="outline" size="sm" onClick={() => setShowResults(false)}>
-            Adjust Filters
-          </Button>
-        </div>
-        
-        {suggestedCampaigns.map((campaign) => (
-          <div
-            key={campaign.id}
-            className="p-4 rounded-xl bg-card border border-border hover:border-primary/30 transition-all"
-          >
-            <div className="flex items-start justify-between mb-3">
-              <h4 className="font-semibold">{campaign.title}</h4>
-              <div className="flex items-center gap-1 text-sm">
-                <TrendingUp className="w-4 h-4 text-green-400" />
-                <span className="text-green-400 font-medium">{campaign.effectiveness}%</span>
-              </div>
+  const renderStep = () => {
+    switch (step) {
+      case "objective":
+        return (
+          <div className="space-y-4">
+            <div className="text-center mb-6">
+              <h3 className="text-lg font-semibold mb-1">What's your campaign goal?</h3>
+              <p className="text-sm text-muted-foreground">Select the main objective for this campaign</p>
             </div>
             
-            <p className="text-sm text-muted-foreground mb-4">{campaign.concept}</p>
-            
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <div className="flex items-center gap-2 text-sm">
-                <Users className="w-4 h-4 text-muted-foreground" />
-                <span className="text-muted-foreground">{campaign.audience}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Clock className="w-4 h-4 text-muted-foreground" />
-                <span className="text-muted-foreground">{campaign.duration}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <DollarSign className="w-4 h-4 text-muted-foreground" />
-                <span className="text-muted-foreground">{campaign.budget}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Target className="w-4 h-4 text-muted-foreground" />
-                <span className="text-muted-foreground">{radius} miles</span>
-              </div>
+            <div className="space-y-3">
+              {objectives.map((obj) => (
+                <button
+                  key={obj.id}
+                  onClick={() => setCampaignData(prev => ({ ...prev, objective: obj.id }))}
+                  className={cn(
+                    "w-full p-4 rounded-xl text-left transition-all duration-300 border",
+                    campaignData.objective === obj.id
+                      ? "gradient-primary border-transparent"
+                      : "bg-card border-border hover:border-primary/50"
+                  )}
+                >
+                  <div className="font-medium">{obj.label}</div>
+                  <div className={cn(
+                    "text-sm",
+                    campaignData.objective === obj.id ? "text-white/80" : "text-muted-foreground"
+                  )}>
+                    {obj.description}
+                  </div>
+                </button>
+              ))}
             </div>
-            
-            <Button variant="gradient" size="sm" className="w-full">
-              Use This Campaign
+
+            <Button 
+              variant="gradient" 
+              size="lg" 
+              className="w-full mt-6"
+              disabled={!campaignData.objective}
+              onClick={() => setStep("timeframe")}
+            >
+              Continue
+              <ChevronRight className="w-5 h-5 ml-2" />
             </Button>
           </div>
-        ))}
-      </div>
-    );
-  }
+        );
+
+      case "timeframe":
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-4">
+              <h3 className="text-lg font-semibold mb-1">Campaign Timeframe</h3>
+              <p className="text-sm text-muted-foreground">When should this campaign run?</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Start Date</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start">
+                      <Calendar className="w-4 h-4 mr-2" />
+                      {campaignData.startDate ? format(campaignData.startDate, "MMM d") : "Select"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={campaignData.startDate}
+                      onSelect={(date) => setCampaignData(prev => ({ ...prev, startDate: date }))}
+                      disabled={(date) => date < new Date()}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">End Date</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start">
+                      <Calendar className="w-4 h-4 mr-2" />
+                      {campaignData.endDate ? format(campaignData.endDate, "MMM d") : "Select"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={campaignData.endDate}
+                      onSelect={(date) => setCampaignData(prev => ({ ...prev, endDate: date }))}
+                      disabled={(date) => date < (campaignData.startDate || new Date())}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            {campaignData.startDate && campaignData.endDate && (
+              <div className="p-3 rounded-lg bg-primary/10 border border-primary/30 text-center">
+                <span className="text-primary font-medium">
+                  {differenceInDays(campaignData.endDate, campaignData.startDate) + 1} days
+                </span>
+                <span className="text-muted-foreground"> campaign duration</span>
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => setStep("objective")} className="flex-1">
+                <ChevronLeft className="w-5 h-5 mr-2" />
+                Back
+              </Button>
+              <Button 
+                variant="gradient" 
+                className="flex-1"
+                disabled={!campaignData.startDate || !campaignData.endDate}
+                onClick={() => setStep("schedule")}
+              >
+                Continue
+                <ChevronRight className="w-5 h-5 ml-2" />
+              </Button>
+            </div>
+          </div>
+        );
+
+      case "schedule":
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-4">
+              <h3 className="text-lg font-semibold mb-1">Posting Schedule</h3>
+              <p className="text-sm text-muted-foreground">Which days and time should we post?</p>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium mb-3 block">Posting Days</label>
+              <div className="flex gap-2 flex-wrap">
+                {days.map((day) => (
+                  <button
+                    key={day}
+                    onClick={() => toggleDay(day)}
+                    className={cn(
+                      "w-12 h-12 rounded-xl text-sm font-medium transition-all",
+                      campaignData.postingDays.includes(day)
+                        ? "gradient-primary text-white"
+                        : "bg-card border border-border hover:border-primary/50"
+                    )}
+                  >
+                    {day}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium mb-3 block">Best Time to Post</label>
+              <div className="grid grid-cols-4 gap-2">
+                {timeSlots.map((time) => (
+                  <button
+                    key={time}
+                    onClick={() => setCampaignData(prev => ({ ...prev, postingTime: time }))}
+                    className={cn(
+                      "px-2 py-2 rounded-lg text-xs font-medium transition-all",
+                      campaignData.postingTime === time
+                        ? "gradient-primary text-white"
+                        : "bg-card border border-border hover:border-primary/50"
+                    )}
+                  >
+                    {time}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => setStep("timeframe")} className="flex-1">
+                <ChevronLeft className="w-5 h-5 mr-2" />
+                Back
+              </Button>
+              <Button 
+                variant="gradient" 
+                className="flex-1"
+                disabled={campaignData.postingDays.length === 0}
+                onClick={() => setStep("budget")}
+              >
+                Continue
+                <ChevronRight className="w-5 h-5 ml-2" />
+              </Button>
+            </div>
+          </div>
+        );
+
+      case "budget":
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-4">
+              <h3 className="text-lg font-semibold mb-1">Campaign Budget</h3>
+              <p className="text-sm text-muted-foreground">Set your total campaign budget</p>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium mb-3 block flex items-center gap-2">
+                <DollarSign className="w-4 h-4 text-primary" />
+                Total Budget
+              </label>
+              <Input
+                type="number"
+                value={campaignData.budget}
+                onChange={(e) => setCampaignData(prev => ({ ...prev, budget: e.target.value }))}
+                placeholder="Enter your total budget"
+                min="10"
+                className="text-lg"
+              />
+            </div>
+
+            {campaignData.startDate && campaignData.endDate && campaignData.budget && (
+              <div className="p-4 rounded-xl bg-card border border-border space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Daily spend estimate</span>
+                  <span className="font-medium">
+                    ${(parseInt(campaignData.budget) / (differenceInDays(campaignData.endDate, campaignData.startDate) + 1)).toFixed(2)}/day
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Campaign duration</span>
+                  <span className="font-medium">
+                    {differenceInDays(campaignData.endDate, campaignData.startDate) + 1} days
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Posting schedule</span>
+                  <span className="font-medium">
+                    {campaignData.postingDays.length}x per week
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => setStep("schedule")} className="flex-1">
+                <ChevronLeft className="w-5 h-5 mr-2" />
+                Back
+              </Button>
+              <Button 
+                variant="gradient" 
+                className="flex-1"
+                disabled={!campaignData.budget || parseInt(campaignData.budget) < 10}
+                onClick={generateCampaign}
+              >
+                <Sparkles className="w-5 h-5 mr-2" />
+                Generate Plan
+              </Button>
+            </div>
+          </div>
+        );
+
+      case "results":
+        if (!generatedCampaign) return null;
+        
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold">Your Campaign Plan</h3>
+              <Button variant="outline" size="sm" onClick={() => {
+                setStep("objective");
+                setGeneratedCampaign(null);
+              }}>
+                Start Over
+              </Button>
+            </div>
+
+            {/* Campaign Overview */}
+            <div className="p-4 rounded-xl bg-primary/10 border border-primary/30">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Daily Budget</span>
+                  <div className="font-semibold text-lg">{generatedCampaign.dailyBudget}</div>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Total Posts</span>
+                  <div className="font-semibold text-lg">{generatedCampaign.totalPosts}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Recommendations */}
+            <div className="p-4 rounded-xl bg-card border border-border">
+              <h4 className="font-medium mb-3">Recommendations</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-primary" />
+                  <span className="text-muted-foreground">Target Age:</span>
+                  <span className="font-medium">{generatedCampaign.ageRange}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-primary" />
+                  <span className="text-muted-foreground">Radius:</span>
+                  <span className="font-medium">{generatedCampaign.radius}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Target className="w-4 h-4 text-primary" />
+                  <span className="text-muted-foreground">Platforms:</span>
+                  <div className="flex gap-1">
+                    <Instagram className="w-4 h-4" />
+                    <Video className="w-4 h-4" />
+                    <Facebook className="w-4 h-4" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Content Ideas */}
+            <div>
+              <h4 className="font-medium mb-3">Content Plan</h4>
+              <div className="space-y-3">
+                {generatedCampaign.ideas.map((idea, idx) => (
+                  <div
+                    key={idx}
+                    className="p-4 rounded-xl bg-card border border-border hover:border-primary/30 transition-all"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <span className="text-xs font-medium text-primary uppercase bg-primary/10 px-2 py-1 rounded-md">
+                          Day {idea.day} • {idea.type}
+                        </span>
+                      </div>
+                      <span className="text-sm font-medium text-muted-foreground">{idea.budget}</span>
+                    </div>
+                    <h5 className="font-medium mt-2">{idea.title}</h5>
+                    <p className="text-sm text-muted-foreground">{idea.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <Button variant="gradient" size="lg" className="w-full">
+              Add to Schedule
+            </Button>
+          </div>
+        );
+    }
+  };
+
+  // Progress indicator
+  const steps: CampaignStep[] = ["objective", "timeframe", "schedule", "budget", "results"];
+  const currentStepIndex = steps.indexOf(step);
 
   return (
     <div className="space-y-6">
-      {/* Age Range */}
-      <div>
-        <label className="text-sm font-medium mb-3 block flex items-center gap-2">
-          <Users className="w-4 h-4 text-primary" />
-          Target Age Range
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {ageRanges.map((age) => (
-            <button
-              key={age}
-              onClick={() => toggleAge(age)}
+      {/* Progress bar */}
+      {step !== "results" && (
+        <div className="flex gap-1">
+          {steps.slice(0, 4).map((s, idx) => (
+            <div
+              key={s}
               className={cn(
-                "px-3 py-1.5 rounded-lg text-sm font-medium transition-all",
-                selectedAges.includes(age)
-                  ? "gradient-primary text-white"
-                  : "bg-card border border-border hover:border-primary/50"
+                "h-1 flex-1 rounded-full transition-all",
+                idx <= currentStepIndex ? "gradient-primary" : "bg-border"
               )}
-            >
-              {age}
-            </button>
+            />
           ))}
         </div>
-      </div>
+      )}
 
-      {/* Location Radius */}
-      <div>
-        <label className="text-sm font-medium mb-3 block flex items-center gap-2">
-          <MapPin className="w-4 h-4 text-primary" />
-          Location Radius (miles)
-        </label>
-        <Input
-          type="number"
-          value={radius}
-          onChange={(e) => setRadius(e.target.value)}
-          placeholder="Enter radius in miles"
-          min="1"
-          max="50"
-        />
-      </div>
-
-      {/* Interests */}
-      <div>
-        <label className="text-sm font-medium mb-3 block flex items-center gap-2">
-          <Target className="w-4 h-4 text-primary" />
-          Interests
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {interests.map((interest) => (
-            <button
-              key={interest}
-              onClick={() => toggleInterest(interest)}
-              className={cn(
-                "px-3 py-1.5 rounded-lg text-sm font-medium transition-all",
-                selectedInterests.includes(interest)
-                  ? "gradient-primary text-white"
-                  : "bg-card border border-border hover:border-primary/50"
-              )}
-            >
-              {interest}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Budget */}
-      <div>
-        <label className="text-sm font-medium mb-3 block flex items-center gap-2">
-          <DollarSign className="w-4 h-4 text-primary" />
-          Budget
-        </label>
-        <Input
-          type="number"
-          value={budget}
-          onChange={(e) => setBudget(e.target.value)}
-          placeholder="Enter your budget"
-          min="10"
-        />
-      </div>
-
-      <Button variant="gradient" size="lg" className="w-full" onClick={handleGenerate}>
-        <Sparkles className="w-5 h-5 mr-2" />
-        Generate Campaign Ideas
-      </Button>
+      {renderStep()}
     </div>
   );
 };
