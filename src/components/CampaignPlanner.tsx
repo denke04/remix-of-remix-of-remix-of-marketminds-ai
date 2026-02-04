@@ -22,9 +22,10 @@ const timeSlots = [
   "5:00 PM", "6:00 PM", "7:00 PM", "8:00 PM"
 ];
 
-type CampaignStep = "objective" | "timeframe" | "schedule" | "budget" | "results";
+type CampaignStep = "idea" | "objective" | "timeframe" | "schedule" | "budget" | "results";
 
 interface CampaignData {
+  campaignIdea: string;
   objective: string;
   startDate: Date | undefined;
   endDate: Date | undefined;
@@ -49,8 +50,9 @@ interface GeneratedCampaign {
 }
 
 export const CampaignPlanner = () => {
-  const [step, setStep] = useState<CampaignStep>("objective");
+  const [step, setStep] = useState<CampaignStep>("idea");
   const [campaignData, setCampaignData] = useState<CampaignData>({
+    campaignIdea: "",
     objective: "",
     startDate: undefined,
     endDate: undefined,
@@ -128,7 +130,7 @@ export const CampaignPlanner = () => {
     setGeneratedCampaign({
       dailyBudget: `$${dailyBudget}`,
       totalPosts: postsCount,
-      platforms: ["Instagram", "TikTok", "Facebook"],
+      platforms: ["Instagram", "TikTok", "Facebook", "Google"],
       ageRange: campaignData.objective === "sales" ? "25-44" : "18-35",
       radius: "5 miles",
       ideas,
@@ -139,6 +141,40 @@ export const CampaignPlanner = () => {
 
   const renderStep = () => {
     switch (step) {
+      case "idea":
+        return (
+          <div className="space-y-4">
+            <div className="text-center mb-6">
+              <h3 className="text-lg font-semibold mb-1">What's your campaign about?</h3>
+              <p className="text-sm text-muted-foreground">Describe the core idea, message, or theme of this campaign</p>
+            </div>
+            
+            <div>
+              <label className="text-sm font-medium mb-2 block">Campaign Idea / Concept</label>
+              <Textarea
+                value={campaignData.campaignIdea}
+                onChange={(e) => setCampaignData(prev => ({ ...prev, campaignIdea: e.target.value }))}
+                placeholder="E.g., Summer sale promotion with 20% off all drinks, featuring our new cold brew collection. Emphasize refreshment and beat-the-heat messaging..."
+                className="min-h-[120px]"
+              />
+              <p className="text-xs text-muted-foreground mt-2">
+                This helps us generate targeted content ideas and recommendations for your campaign.
+              </p>
+            </div>
+
+            <Button 
+              variant="gradient" 
+              size="lg" 
+              className="w-full mt-6"
+              disabled={!campaignData.campaignIdea.trim()}
+              onClick={() => setStep("objective")}
+            >
+              Continue
+              <ChevronRight className="w-5 h-5 ml-2" />
+            </Button>
+          </div>
+        );
+
       case "objective":
         return (
           <div className="space-y-4">
@@ -170,16 +206,21 @@ export const CampaignPlanner = () => {
               ))}
             </div>
 
-            <Button 
-              variant="gradient" 
-              size="lg" 
-              className="w-full mt-6"
-              disabled={!campaignData.objective}
-              onClick={() => setStep("timeframe")}
-            >
-              Continue
-              <ChevronRight className="w-5 h-5 ml-2" />
-            </Button>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => setStep("idea")} className="flex-1">
+                <ChevronLeft className="w-5 h-5 mr-2" />
+                Back
+              </Button>
+              <Button 
+                variant="gradient" 
+                className="flex-1"
+                disabled={!campaignData.objective}
+                onClick={() => setStep("timeframe")}
+              >
+                Continue
+                <ChevronRight className="w-5 h-5 ml-2" />
+              </Button>
+            </div>
           </div>
         );
 
@@ -243,7 +284,7 @@ export const CampaignPlanner = () => {
             )}
 
             <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setStep("objective")} className="flex-1">
+              <Button variant="outline" onClick={() => setStep("idea")} className="flex-1">
                 <ChevronLeft className="w-5 h-5 mr-2" />
                 Back
               </Button>
@@ -478,15 +519,15 @@ export const CampaignPlanner = () => {
   };
 
   // Progress indicator
-  const steps: CampaignStep[] = ["objective", "timeframe", "schedule", "budget", "results"];
+  const steps: CampaignStep[] = ["idea", "objective", "timeframe", "schedule", "budget", "results"];
   const currentStepIndex = steps.indexOf(step);
 
   return (
     <div className="space-y-6">
       {/* Progress bar */}
       {step !== "results" && (
-        <div className="flex gap-1">
-          {steps.slice(0, 4).map((s, idx) => (
+        <div className="flex gap-1 mb-4">
+          {steps.slice(0, 5).map((s, idx) => (
             <div
               key={s}
               className={cn(

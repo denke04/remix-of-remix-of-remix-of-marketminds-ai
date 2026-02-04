@@ -9,6 +9,7 @@ const platforms = [
   { id: "tiktok", label: "TikTok", active: false },
   { id: "youtube", label: "Shorts", active: false },
   { id: "facebook", label: "Facebook", active: false },
+  { id: "google", label: "Google", active: false },
 ];
 
 const platformTips: Record<string, { good: string[]; issues: string[]; tips: string[] }> = {
@@ -78,6 +79,23 @@ const platformTips: Record<string, { good: string[]; issues: string[]; tips: str
       "Write longer, more informative captions (150-300 words work well)",
       "Include background story and context",
       "End with a question to boost engagement",
+    ],
+  },
+  google: {
+    good: [
+      "Good local SEO relevance",
+      "Clear business representation",
+      "Quality image resolution for Business Profile",
+    ],
+    issues: [
+      "Missing location-specific keywords",
+      "Description doesn't highlight unique value proposition",
+      "No call-to-action for directions or contact",
+    ],
+    tips: [
+      "Include location keywords (city, neighborhood) in descriptions",
+      "Add Google Posts regularly to boost visibility",
+      "Encourage and respond to Google reviews for engagement",
     ],
   },
 };
