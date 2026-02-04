@@ -8,6 +8,8 @@ interface UserData {
   goals: string[];
   platforms: string[];
   experience: string;
+  businessDescription?: string;
+  businessMessage?: string;
 }
 
 interface UserContextType {
@@ -23,6 +25,8 @@ const defaultUserData: UserData = {
   goals: [],
   platforms: [],
   experience: "",
+  businessDescription: "",
+  businessMessage: "",
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);

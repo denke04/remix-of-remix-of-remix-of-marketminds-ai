@@ -1,26 +1,19 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Building2, Target, Smartphone, BarChart, User, Users } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/contexts/UserContext";
+import { MarketMindIcon } from "@/components/icons/MarketMindIcon";
 
-const industries = [
-  "Cafe / Restaurant",
-  "Fitness / Gym",
-  "E-commerce",
-  "Real Estate",
-  "Beauty / Salon",
-  "Healthcare",
-  "Education",
-  "Other",
-];
+// Removed predefined industries - now using open text inputs
 
 const goals = [
-  { id: "sales", label: "More Sales", icon: Target },
-  { id: "followers", label: "More Followers", icon: BarChart },
-  { id: "engagement", label: "More Engagement", icon: Smartphone },
+  { id: "sales", label: "More Sales", description: "Increase revenue and conversions" },
+  { id: "followers", label: "More Followers", description: "Grow your audience" },
+  { id: "engagement", label: "More Engagement", description: "Boost likes, comments, shares" },
 ];
 
 const platforms = [
@@ -29,6 +22,7 @@ const platforms = [
   { id: "youtube", label: "YouTube Shorts", color: "from-red-500 to-red-600" },
   { id: "facebook", label: "Facebook", color: "from-blue-600 to-blue-700" },
   { id: "twitter", label: "X (Twitter)", color: "from-gray-600 to-gray-800" },
+  { id: "google", label: "Google", color: "from-green-500 to-blue-500" },
 ];
 
 const experienceLevels = [
@@ -51,7 +45,8 @@ const Onboarding = () => {
   const [firstName, setFirstName] = useState("");
   const [businessName, setBusinessName] = useState("");
   const [teamSize, setTeamSize] = useState("");
-  const [industry, setIndustry] = useState("");
+  const [businessDescription, setBusinessDescription] = useState("");
+  const [businessMessage, setBusinessMessage] = useState("");
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [experience, setExperience] = useState("");
@@ -78,7 +73,7 @@ const Onboarding = () => {
     switch (step) {
       case 1: return firstName.trim().length > 0 && businessName.trim().length > 0;
       case 2: return teamSize.length > 0;
-      case 3: return industry.length > 0;
+      case 3: return businessDescription.trim().length > 0 && businessMessage.trim().length > 0;
       case 4: return selectedGoals.length > 0;
       case 5: return selectedPlatforms.length > 0;
       case 6: return experience.length > 0;
@@ -95,10 +90,12 @@ const Onboarding = () => {
         firstName,
         companyName: businessName,
         teamSize,
-        industry,
+        industry: businessDescription, // Using description as industry for compatibility
         goals: selectedGoals,
         platforms: selectedPlatforms,
         experience,
+        businessDescription,
+        businessMessage,
       });
       navigate("/dashboard");
     }
@@ -132,7 +129,7 @@ const Onboarding = () => {
         {step === 1 && (
           <div className="animate-fade-in">
             <div className="w-14 h-14 rounded-2xl gradient-primary flex items-center justify-center mb-6">
-              <User className="w-7 h-7 text-primary-foreground" />
+              <MarketMindIcon className="w-7 h-7" />
             </div>
             <h1 className="text-2xl font-bold mb-2">Let's get to know you</h1>
             <p className="text-muted-foreground mb-8">
@@ -163,7 +160,7 @@ const Onboarding = () => {
         {step === 2 && (
           <div className="animate-fade-in">
             <div className="w-14 h-14 rounded-2xl gradient-primary flex items-center justify-center mb-6">
-              <Users className="w-7 h-7 text-primary-foreground" />
+              <MarketMindIcon className="w-7 h-7" />
             </div>
             <h1 className="text-2xl font-bold mb-2">How big is your team?</h1>
             <p className="text-muted-foreground mb-8">
@@ -194,31 +191,35 @@ const Onboarding = () => {
           </div>
         )}
 
-        {/* Step 3: Industry */}
+        {/* Step 3: Business Description */}
         {step === 3 && (
           <div className="animate-fade-in">
             <div className="w-14 h-14 rounded-2xl gradient-primary flex items-center justify-center mb-6">
-              <Building2 className="w-7 h-7 text-primary-foreground" />
+              <MarketMindIcon className="w-7 h-7" />
             </div>
-            <h1 className="text-2xl font-bold mb-2">What industry are you in?</h1>
+            <h1 className="text-2xl font-bold mb-2">Tell us about your business</h1>
             <p className="text-muted-foreground mb-8">
-              This helps us tailor content ideas and trends for you
+              This helps our AI deeply understand your brand identity
             </p>
-            <div className="grid grid-cols-2 gap-3">
-              {industries.map((ind) => (
-                <button
-                  key={ind}
-                  onClick={() => setIndustry(ind)}
-                  className={cn(
-                    "p-4 rounded-xl text-sm font-medium transition-all duration-300 text-left",
-                    industry === ind 
-                      ? "gradient-primary text-primary-foreground glow-subtle" 
-                      : "bg-card border border-border hover:border-primary/50"
-                  )}
-                >
-                  {ind}
-                </button>
-              ))}
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Describe your business</label>
+                <Textarea
+                  placeholder="E.g., We're a specialty coffee shop focusing on single-origin beans and artisanal brewing methods. We serve breakfast and pastries in a cozy, minimalist environment..."
+                  value={businessDescription}
+                  onChange={(e) => setBusinessDescription(e.target.value)}
+                  className="min-h-[100px]"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">What is the message behind this business?</label>
+                <Textarea
+                  placeholder="E.g., We want people to feel that great coffee is an art form worth savoring. Our brand represents mindfulness, quality over quantity, and authentic human connection..."
+                  value={businessMessage}
+                  onChange={(e) => setBusinessMessage(e.target.value)}
+                  className="min-h-[100px]"
+                />
+              </div>
             </div>
           </div>
         )}
@@ -226,6 +227,9 @@ const Onboarding = () => {
         {/* Step 4: Goals */}
         {step === 4 && (
           <div className="animate-fade-in">
+            <div className="w-14 h-14 rounded-2xl gradient-primary flex items-center justify-center mb-6">
+              <MarketMindIcon className="w-7 h-7" />
+            </div>
             <h1 className="text-2xl font-bold mb-2">What's your main goal?</h1>
             <p className="text-muted-foreground mb-8">
               Select all that apply
@@ -236,14 +240,19 @@ const Onboarding = () => {
                   key={goal.id}
                   onClick={() => toggleGoal(goal.id)}
                   className={cn(
-                    "w-full p-4 rounded-xl flex items-center gap-4 transition-all duration-300",
+                    "w-full p-4 rounded-xl text-left transition-all duration-300",
                     selectedGoals.includes(goal.id)
                       ? "gradient-primary text-primary-foreground glow-subtle"
                       : "bg-card border border-border hover:border-primary/50"
                   )}
                 >
-                  <goal.icon className="w-6 h-6" />
-                  <span className="font-medium">{goal.label}</span>
+                  <span className="font-medium block">{goal.label}</span>
+                  <span className={cn(
+                    "text-sm",
+                    selectedGoals.includes(goal.id) ? "text-primary-foreground/80" : "text-muted-foreground"
+                  )}>
+                    {goal.description}
+                  </span>
                 </button>
               ))}
             </div>
@@ -253,6 +262,9 @@ const Onboarding = () => {
         {/* Step 5: Platforms */}
         {step === 5 && (
           <div className="animate-fade-in">
+            <div className="w-14 h-14 rounded-2xl gradient-primary flex items-center justify-center mb-6">
+              <MarketMindIcon className="w-7 h-7" />
+            </div>
             <h1 className="text-2xl font-bold mb-2">Which platforms do you use?</h1>
             <p className="text-muted-foreground mb-8">
               Select all platforms you want to manage
@@ -270,7 +282,7 @@ const Onboarding = () => {
                   )}
                 >
                   <div className={cn("w-8 h-8 rounded-lg bg-gradient-to-br flex items-center justify-center", platform.color)}>
-                    <Smartphone className="w-4 h-4 text-white" />
+                    <MarketMindIcon className="w-4 h-4" />
                   </div>
                   <span className="font-medium">{platform.label}</span>
                 </button>
@@ -282,6 +294,9 @@ const Onboarding = () => {
         {/* Step 6: Experience */}
         {step === 6 && (
           <div className="animate-fade-in">
+            <div className="w-14 h-14 rounded-2xl gradient-primary flex items-center justify-center mb-6">
+              <MarketMindIcon className="w-7 h-7" />
+            </div>
             <h1 className="text-2xl font-bold mb-2">What's your experience level?</h1>
             <p className="text-muted-foreground mb-8">
               We'll adjust our recommendations accordingly

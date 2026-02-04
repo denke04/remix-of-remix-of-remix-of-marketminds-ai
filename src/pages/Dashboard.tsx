@@ -64,6 +64,14 @@ const platforms = [
     positive: false,
     color: "from-blue-600 to-blue-700"
   },
+  { 
+    id: "google", 
+    label: "Google", 
+    followers: "3,421",
+    growth: "+15%",
+    positive: true,
+    color: "from-green-500 to-blue-500"
+  },
 ];
 
 const insights = [
