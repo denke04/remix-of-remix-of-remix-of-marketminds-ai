@@ -1,34 +1,39 @@
-const MarketMindIcon = ({ className = "w-20 h-20" }: { className?: string }) => {
+const MarketMindIcon = ({ className = "w-20 h-20", showGlow = false }: { className?: string; showGlow?: boolean }) => {
   return (
-    <svg
-      viewBox="0 0 100 100"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-    >
-      {/* Growth bars */}
-      <rect x="10" y="60" width="14" height="30" rx="3" fill="currentColor" />
-      <rect x="28" y="45" width="14" height="45" rx="3" fill="currentColor" />
-      <rect x="46" y="30" width="14" height="60" rx="3" fill="currentColor" />
-      <rect x="64" y="15" width="14" height="75" rx="3" fill="currentColor" />
-      
-      {/* Arrow swoosh */}
-      <path
-        d="M8 85 Q 45 70, 85 25"
-        stroke="currentColor"
-        strokeWidth="6"
-        strokeLinecap="round"
+    <div className="relative inline-flex items-center justify-center">
+      {showGlow && (
+        <div className="absolute inset-0 gradient-primary opacity-30 blur-xl rounded-full" />
+      )}
+      <svg
+        viewBox="0 0 100 100"
         fill="none"
-      />
-      <path
-        d="M75 22 L 88 20 L 85 33"
-        stroke="currentColor"
-        strokeWidth="6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-      />
-    </svg>
+        xmlns="http://www.w3.org/2000/svg"
+        className={`${className} relative z-10`}
+      >
+        {/* Growth bars */}
+        <rect x="12" y="65" width="14" height="25" rx="3" fill="currentColor" />
+        <rect x="30" y="52" width="14" height="38" rx="3" fill="currentColor" />
+        <rect x="48" y="40" width="14" height="50" rx="3" fill="currentColor" />
+        <rect x="66" y="28" width="14" height="62" rx="3" fill="currentColor" />
+        
+        {/* Rising arrow ON TOP of the bars */}
+        <path
+          d="M18 58 Q 40 35, 72 12"
+          stroke="currentColor"
+          strokeWidth="5"
+          strokeLinecap="round"
+          fill="none"
+        />
+        <path
+          d="M62 10 L 76 8 L 73 22"
+          stroke="currentColor"
+          strokeWidth="5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+        />
+      </svg>
+    </div>
   );
 };
 
