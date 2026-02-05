@@ -20,10 +20,7 @@ const Welcome = () => {
       <div className="w-full max-w-sm flex flex-col items-center text-center relative z-10">
         {/* Logo */}
         <div className="mb-8 animate-float">
-          <div className="relative">
-            <div className="absolute inset-0 gradient-primary opacity-30 blur-xl rounded-full" />
-            <MarketMindIcon className="w-20 h-20 relative z-10" />
-          </div>
+          <MarketMindIcon className="w-20 h-20 text-primary" showGlow />
         </div>
 
         {/* Title */}
