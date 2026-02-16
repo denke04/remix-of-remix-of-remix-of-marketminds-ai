@@ -1,7 +1,52 @@
 const API_BASE_URL = 'http://localhost:8000';
 
+interface User {
+  id: string;
+  email: string;
+  name: string;
+}
+
+interface OnboardingData {
+  businessName: string;
+  businessType?: string;
+  industry: string;
+  goals: string[];
+  platforms: string[];
+  experience: string;
+  teamSize: string;
+  businessDescription?: string;
+  businessMessage?: string;
+}
+
+interface DashboardMetrics {
+  metrics: Record<string, unknown>;
+  weeklyData: unknown[];
+  platforms: unknown[];
+  insights: unknown[];
+}
+
+interface ContentIdea {
+  id: number;
+  type: string;
+  title: string;
+  hook: string;
+  structure: string;
+  cta: string;
+  trending: boolean;
+}
+
+interface AnalysisResult {
+  score: number;
+  good: string[];
+  issues: string[];
+  tips: string[];
+  platform: string;
+  contentType: string;
+  analyzedAt: string;
+}
+
 class ApiError extends Error {
-  constructor(message: string, public status?: number, public data?: any) {
+  constructor(message: string, public status?: number, public data?: unknown) {
     super(message);
     this.name = 'ApiError';
   }
@@ -67,32 +112,22 @@ export const api = {
   
   // Auth endpoints
   async register(email: string, password: string, name?: string) {
-    return fetchApi<{ user: any; token: string }>('/auth/register', {
+    return fetchApi<{ user: User; token: string }>('/auth/register', {
       method: 'POST',
       body: JSON.stringify({ email, password, name }),
     });
   },
   
   async login(email: string, password: string) {
-    return fetchApi<{ user: any; token: string }>('/auth/login', {
+    return fetchApi<{ user: User; token: string }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
   },
   
   // Onboarding
-  async saveOnboarding(data: {
-    businessName: string;
-    businessType?: string;
-    industry: string;
-    goals: string[];
-    platforms: string[];
-    experience: string;
-    teamSize: string;
-    businessDescription?: string;
-    businessMessage?: string;
-  }) {
-    return fetchApi<{ success: boolean; message: string; data: any }>('/onboarding', {
+  async saveOnboarding(data: OnboardingData) {
+    return fetchApi<{ success: boolean; message: string; data: OnboardingData }>('/onboarding', {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -100,12 +135,7 @@ export const api = {
   
   // Dashboard
   async getDashboard() {
-    return fetchApi<{
-      metrics: any;
-      weeklyData: any[];
-      platforms: any[];
-      insights: any[];
-    }>('/dashboard');
+    return fetchApi<DashboardMetrics>('/dashboard');
   },
   
   // Ideas
@@ -115,7 +145,7 @@ export const api = {
     goals: string[];
     platforms: string[];
   }) {
-    return fetchApi<{ ideas: any[]; generatedAt: string }>('/ideas/generate', {
+    return fetchApi<{ ideas: ContentIdea[]; generatedAt: string }>('/ideas/generate', {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -127,15 +157,7 @@ export const api = {
     contentType: string;
     contentUrl?: string;
   }) {
-    return fetchApi<{
-      score: number;
-      good: string[];
-      issues: string[];
-      tips: string[];
-      platform: string;
-      contentType: string;
-      analyzedAt: string;
-    }>('/analyze', {
+    return fetchApi<AnalysisResult>('/analyze', {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -146,11 +168,11 @@ export const api = {
     postId?: string;
     scheduledTime: string;
     platform: string;
-    content: any;
+    content: unknown;
   }) {
     return fetchApi<{
       success: boolean;
-      scheduledPost: any;
+      scheduledPost: unknown;
     }>('/schedule', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -160,12 +182,12 @@ export const api = {
   // Create
   async createContent(data: {
     contentType: string;
-    brandProfile: any;
+    brandProfile: unknown;
     prompt?: string;
   }) {
     return fetchApi<{
       success: boolean;
-      content: any;
+      content: unknown;
     }>('/create', {
       method: 'POST',
       body: JSON.stringify(data),

@@ -23,7 +23,15 @@ const Ideas = () => {
   const { userData } = useUser();
   const [activeTab, setActiveTab] = useState("Ideas");
   const [activeCategory, setActiveCategory] = useState("all");
-  const [ideas, setIdeas] = useState<any[]>([]);
+  const [ideas, setIdeas] = useState<Array<{
+    id: number;
+    type: string;
+    title: string;
+    hook: string;
+    structure: string;
+    cta: string;
+    trending: boolean;
+  }>>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const generateIdeas = async () => {
