@@ -4,17 +4,44 @@ import { Input } from "@/components/ui/input";
 import { BrainIcon } from "@/components/icons/BrainIcon";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { api, ApiError } from "@/lib/api";
+import { useUser } from "@/contexts/UserContext";
+import { toast } from "sonner";
 
 const Login = () => {
   const navigate = useNavigate();
+  const { setAuthUser, setToken } = useUser();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // For demo, just navigate to dashboard
-    navigate("/dashboard");
+    
+    if (!email || !password) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      const response = await api.login(email, password);
+      setAuthUser(response.user);
+      setToken(response.token);
+      toast.success("Welcome back!");
+      navigate("/dashboard");
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(error.message);
+      } else {
+        toast.error("Failed to log in. Please try again.");
+      }
+      console.error("Login error:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -80,8 +107,8 @@ const Login = () => {
             Forgot password?
           </button>
 
-          <Button variant="gradient" size="lg" className="w-full mt-6">
-            Log In
+          <Button variant="gradient" size="lg" className="w-full mt-6" disabled={isLoading}>
+            {isLoading ? "Logging in..." : "Log In"}
           </Button>
         </form>
 

@@ -3,6 +3,8 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Upload, Link, Image, Video, CheckCircle, XCircle, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { api, ApiError } from "@/lib/api";
+import { toast } from "sonner";
 
 const platforms = [
   { id: "instagram", label: "Instagram", active: true },
@@ -105,14 +107,36 @@ const Analyze = () => {
   const [uploadType, setUploadType] = useState<"upload" | "link" | null>(null);
   const [hasAnalysis, setHasAnalysis] = useState(false);
   const [contentType, setContentType] = useState<"photo" | "video">("photo");
+  const [analysisResult, setAnalysisResult] = useState<{
+    score: number;
+    good: string[];
+    issues: string[];
+    tips: string[];
+  } | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const analysisResult = {
-    score: 72,
-    ...platformTips[selectedPlatform],
-  };
-
-  const handleAnalyze = () => {
-    setHasAnalysis(true);
+  const handleAnalyze = async () => {
+    setIsLoading(true);
+    
+    try {
+      const response = await api.analyzeContent({
+        platform: selectedPlatform,
+        contentType,
+      });
+      
+      setAnalysisResult(response);
+      setHasAnalysis(true);
+      toast.success("Analysis complete!");
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(error.message);
+      } else {
+        toast.error("Failed to analyze content");
+      }
+      console.error("Analyze error:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -222,8 +246,9 @@ const Analyze = () => {
               size="lg" 
               className="w-full"
               onClick={handleAnalyze}
+              disabled={isLoading}
             >
-              Analyze Content
+              {isLoading ? "Analyzing..." : "Analyze Content"}
             </Button>
           </>
         ) : (
@@ -257,7 +282,7 @@ const Analyze = () => {
                     strokeWidth="8"
                     fill="none"
                     strokeLinecap="round"
-                    strokeDasharray={`${analysisResult.score * 2.51} 251`}
+                    strokeDasharray={`${(analysisResult?.score || 0) * 2.51} 251`}
                   />
                   <defs>
                     <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -267,7 +292,7 @@ const Analyze = () => {
                   </defs>
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-3xl font-bold">{analysisResult.score}</span>
+                  <span className="text-3xl font-bold">{analysisResult?.score || 0}</span>
                 </div>
               </div>
               <p className="text-sm text-muted-foreground">Performance Score for {platforms.find(p => p.id === selectedPlatform)?.label}</p>
@@ -280,7 +305,7 @@ const Analyze = () => {
                 <span className="font-semibold">What's Working</span>
               </div>
               <ul className="space-y-2">
-                {analysisResult.good.map((item, i) => (
+                {(analysisResult?.good || []).map((item: string, i: number) => (
                   <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
                     <span className="text-green-400 mt-1">•</span>
                     {item}
@@ -296,7 +321,7 @@ const Analyze = () => {
                 <span className="font-semibold">What Needs Work</span>
               </div>
               <ul className="space-y-2">
-                {analysisResult.issues.map((item, i) => (
+                {(analysisResult?.issues || []).map((item: string, i: number) => (
                   <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
                     <span className="text-red-400 mt-1">•</span>
                     {item}
@@ -312,7 +337,7 @@ const Analyze = () => {
                 <span className="font-semibold">How to Fix for {platforms.find(p => p.id === selectedPlatform)?.label}</span>
               </div>
               <ul className="space-y-2">
-                {analysisResult.tips.map((item, i) => (
+                {(analysisResult?.tips || []).map((item: string, i: number) => (
                   <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
                     <span className="gradient-text mt-1">{i + 1}.</span>
                     {item}
@@ -325,7 +350,10 @@ const Analyze = () => {
               variant="outline" 
               size="lg" 
               className="w-full"
-              onClick={() => setHasAnalysis(false)}
+              onClick={() => {
+                setHasAnalysis(false);
+                setAnalysisResult(null);
+              }}
             >
               Analyze Another
             </Button>

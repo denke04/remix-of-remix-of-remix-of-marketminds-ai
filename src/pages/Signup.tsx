@@ -4,16 +4,49 @@ import { Input } from "@/components/ui/input";
 import { BrainIcon } from "@/components/icons/BrainIcon";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { api, ApiError } from "@/lib/api";
+import { useUser } from "@/contexts/UserContext";
+import { toast } from "sonner";
 
 const Signup = () => {
   const navigate = useNavigate();
+  const { setAuthUser, setToken } = useUser();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate("/onboarding");
+    
+    if (!email || !password) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+    
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      const response = await api.register(email, password);
+      setAuthUser(response.user);
+      setToken(response.token);
+      toast.success("Account created successfully!");
+      navigate("/onboarding");
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(error.message);
+      } else {
+        toast.error("Failed to create account. Please try again.");
+      }
+      console.error("Signup error:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -76,8 +109,8 @@ const Signup = () => {
             By creating an account, you agree to our Terms of Service and Privacy Policy
           </p>
 
-          <Button variant="gradient" size="lg" className="w-full mt-6">
-            Create Account
+          <Button variant="gradient" size="lg" className="w-full mt-6" disabled={isLoading}>
+            {isLoading ? "Creating Account..." : "Create Account"}
           </Button>
         </form>
 

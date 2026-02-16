@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 
 interface UserData {
   firstName: string;
@@ -12,9 +12,21 @@ interface UserData {
   businessMessage?: string;
 }
 
+interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+}
+
 interface UserContextType {
   userData: UserData;
   setUserData: (data: Partial<UserData>) => void;
+  authUser: AuthUser | null;
+  setAuthUser: (user: AuthUser | null) => void;
+  token: string | null;
+  setToken: (token: string | null) => void;
+  logout: () => void;
+  isAuthenticated: boolean;
 }
 
 const defaultUserData: UserData = {
@@ -37,6 +49,15 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     return saved ? JSON.parse(saved) : defaultUserData;
   });
 
+  const [authUser, setAuthUserState] = useState<AuthUser | null>(() => {
+    const saved = localStorage.getItem("marketmind_auth_user");
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const [token, setTokenState] = useState<string | null>(() => {
+    return localStorage.getItem("marketmind_token");
+  });
+
   const setUserData = (data: Partial<UserData>) => {
     setUserDataState((prev) => {
       const updated = { ...prev, ...data };
@@ -45,8 +66,46 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  const setAuthUser = (user: AuthUser | null) => {
+    setAuthUserState(user);
+    if (user) {
+      localStorage.setItem("marketmind_auth_user", JSON.stringify(user));
+    } else {
+      localStorage.removeItem("marketmind_auth_user");
+    }
+  };
+
+  const setToken = (newToken: string | null) => {
+    setTokenState(newToken);
+    if (newToken) {
+      localStorage.setItem("marketmind_token", newToken);
+    } else {
+      localStorage.removeItem("marketmind_token");
+    }
+  };
+
+  const logout = () => {
+    setAuthUser(null);
+    setToken(null);
+    setUserDataState(defaultUserData);
+    localStorage.removeItem("marketmind_user");
+    localStorage.removeItem("marketmind_auth_user");
+    localStorage.removeItem("marketmind_token");
+  };
+
+  const isAuthenticated = !!token && !!authUser;
+
   return (
-    <UserContext.Provider value={{ userData, setUserData }}>
+    <UserContext.Provider value={{ 
+      userData, 
+      setUserData, 
+      authUser, 
+      setAuthUser, 
+      token, 
+      setToken, 
+      logout,
+      isAuthenticated 
+    }}>
       {children}
     </UserContext.Provider>
   );
