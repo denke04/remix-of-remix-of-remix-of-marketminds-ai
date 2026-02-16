@@ -7,6 +7,8 @@ import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/contexts/UserContext";
 import { MarketMindIcon } from "@/components/icons/MarketMindIcon";
+import { api, ApiError } from "@/lib/api";
+import { toast } from "sonner";
 
 // Platform brand icons as SVG components
 const InstagramIcon = ({ className }: { className?: string }) => (
@@ -97,6 +99,7 @@ const Onboarding = () => {
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [experience, setExperience] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const totalSteps = 6;
 
@@ -128,23 +131,52 @@ const Onboarding = () => {
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step < totalSteps) {
       setStep(step + 1);
     } else {
-      // Save user data
-      setUserData({
-        firstName,
-        companyName: businessName,
-        teamSize,
-        industry: businessDescription, // Using description as industry for compatibility
-        goals: selectedGoals,
-        platforms: selectedPlatforms,
-        experience,
-        businessDescription,
-        businessMessage,
-      });
-      navigate("/dashboard");
+      setIsLoading(true);
+      
+      try {
+        // Save to local context
+        const userData = {
+          firstName,
+          companyName: businessName,
+          teamSize,
+          industry: businessDescription,
+          goals: selectedGoals,
+          platforms: selectedPlatforms,
+          experience,
+          businessDescription,
+          businessMessage,
+        };
+        
+        setUserData(userData);
+        
+        // Save to backend
+        await api.saveOnboarding({
+          businessName,
+          industry: businessDescription,
+          goals: selectedGoals,
+          platforms: selectedPlatforms,
+          experience,
+          teamSize,
+          businessDescription,
+          businessMessage,
+        });
+        
+        toast.success("Setup complete! Welcome to MarketMind");
+        navigate("/dashboard");
+      } catch (error) {
+        if (error instanceof ApiError) {
+          toast.error(error.message);
+        } else {
+          toast.error("Failed to save onboarding data");
+        }
+        console.error("Onboarding error:", error);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -370,10 +402,10 @@ const Onboarding = () => {
             variant="gradient" 
             size="lg" 
             className="w-full"
-            disabled={!canProceed()}
+            disabled={!canProceed() || isLoading}
             onClick={handleNext}
           >
-            {step === totalSteps ? "Complete Setup" : "Continue"}
+            {isLoading ? "Saving..." : (step === totalSteps ? "Complete Setup" : "Continue")}
             <ArrowRight className="w-5 h-5 ml-2" />
           </Button>
         </div>
