@@ -107,19 +107,19 @@ async function fetchApi<T>(
 export const api = {
   // Health check
   async checkHealth() {
-    return fetchApi<{ status: string; message: string }>('/health');
+    return fetchApi<{ status: string; message: string }>('/api/health');
   },
   
   // Auth endpoints
   async register(email: string, password: string, name?: string) {
-    return fetchApi<{ user: User; token: string }>('/auth/register', {
+    return fetchApi<{ user: User; token: string }>('/api/auth/signup', {
       method: 'POST',
       body: JSON.stringify({ email, password, name }),
     });
   },
   
   async login(email: string, password: string) {
-    return fetchApi<{ user: User; token: string }>('/auth/login', {
+    return fetchApi<{ user: User; token: string }>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
@@ -127,7 +127,7 @@ export const api = {
   
   // Onboarding
   async saveOnboarding(data: OnboardingData) {
-    return fetchApi<{ success: boolean; message: string; data: OnboardingData }>('/onboarding', {
+    return fetchApi<{ success: boolean; message: string; data: OnboardingData }>('/api/onboarding', {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -135,7 +135,7 @@ export const api = {
   
   // Dashboard
   async getDashboard() {
-    return fetchApi<DashboardMetrics>('/dashboard');
+    return fetchApi<DashboardMetrics>('/api/dashboard');
   },
   
   // Ideas
@@ -145,7 +145,7 @@ export const api = {
     goals: string[];
     platforms: string[];
   }) {
-    return fetchApi<{ ideas: ContentIdea[]; generatedAt: string }>('/ideas/generate', {
+    return fetchApi<{ ideas: ContentIdea[]; generatedAt: string }>('/api/ideas/generate', {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -157,7 +157,7 @@ export const api = {
     contentType: string;
     contentUrl?: string;
   }) {
-    return fetchApi<AnalysisResult>('/analyze', {
+    return fetchApi<AnalysisResult>('/api/analyze', {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -173,7 +173,7 @@ export const api = {
     return fetchApi<{
       success: boolean;
       scheduledPost: unknown;
-    }>('/schedule', {
+    }>('/api/schedule', {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -188,7 +188,7 @@ export const api = {
     return fetchApi<{
       success: boolean;
       content: unknown;
-    }>('/create', {
+    }>('/api/create', {
       method: 'POST',
       body: JSON.stringify(data),
     });
