@@ -1,8 +1,14 @@
 import express from 'express';
 import cors from 'cors';
+import { createClient } from '@supabase/supabase-js';
 
 const app = express();
 const PORT = 8000;
+
+// Initialize Supabase client
+const supabaseUrl = process.env.SUPABASE_URL || '';
+const supabaseKey = process.env.SUPABASE_ANON_KEY || '';
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
 // Middleware
 app.use(cors({
@@ -15,13 +21,50 @@ app.use(express.json());
 const users = new Map();
 const sessions = new Map();
 
+// Auth middleware to extract user from token
+const authenticateUser = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7);
+    
+    // Check in-memory sessions first
+    const user = sessions.get(token);
+    if (user) {
+      req.user = user;
+      return next();
+    }
+    
+    // If Supabase is configured, verify JWT token
+    if (supabase) {
+      try {
+        const { data: { user: supabaseUser }, error } = await supabase.auth.getUser(token);
+        if (!error && supabaseUser) {
+          req.user = {
+            id: supabaseUser.id,
+            email: supabaseUser.email,
+            name: supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0],
+          };
+          return next();
+        }
+      } catch (error) {
+        console.error('Supabase auth error:', error);
+      }
+    }
+  }
+  
+  // No valid authentication found, but continue (some endpoints may not require auth)
+  next();
+};
+
+app.use(authenticateUser);
+
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'MarketMinds AI API is running' });
 });
 
 // Auth endpoints
-app.post('/auth/register', (req, res) => {
+app.post('/api/auth/register', (req, res) => {
   const { email, password, name } = req.body;
   
   if (!email || !password) {
@@ -49,7 +92,7 @@ app.post('/auth/register', (req, res) => {
   });
 });
 
-app.post('/auth/login', (req, res) => {
+app.post('/api/auth/login', (req, res) => {
   const { email, password } = req.body;
   
   if (!email || !password) {
@@ -72,29 +115,73 @@ app.post('/auth/login', (req, res) => {
 });
 
 // Onboarding endpoint
-app.post('/onboarding', (req, res) => {
+app.post('/api/onboarding', async (req, res) => {
   const { businessName, businessType, industry, goals, platforms, experience, teamSize, businessDescription, businessMessage } = req.body;
   
-  // Store onboarding data (in real app, would save to database)
+  // Get user email from authenticated session
+  const userEmail = req.user?.email;
+  
+  if (!userEmail) {
+    return res.status(401).json({ 
+      error: 'Authentication required. Please log in to complete onboarding.' 
+    });
+  }
+  
+  // Prepare data for Supabase
+  const userData = {
+    email: userEmail,
+    businessName,
+    industry,
+    goals,
+    platforms,
+    experience,
+    teamSize,
+  };
+  
+  // If Supabase is configured, save to database
+  if (supabase) {
+    try {
+      // Try to update existing user, or insert if not exists
+      const { data, error } = await supabase
+        .from('users')
+        .upsert(userData, { 
+          onConflict: 'email',
+          ignoreDuplicates: false 
+        })
+        .select();
+      
+      if (error) {
+        console.error('Supabase error:', error);
+        return res.status(500).json({ 
+          error: 'Failed to save onboarding data',
+          details: error.message 
+        });
+      }
+      
+      return res.json({
+        success: true,
+        message: 'Onboarding completed successfully',
+        data: userData,
+      });
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      return res.status(500).json({ 
+        error: 'An unexpected error occurred while saving onboarding data' 
+      });
+    }
+  }
+  
+  // Fallback: If Supabase not configured, just return success with mock data
+  console.warn('Supabase not configured. Onboarding data not persisted.');
   res.json({
     success: true,
-    message: 'Onboarding completed successfully',
-    data: {
-      businessName,
-      businessType,
-      industry,
-      goals,
-      platforms,
-      experience,
-      teamSize,
-      businessDescription,
-      businessMessage,
-    },
+    message: 'Onboarding completed successfully (demo mode)',
+    data: userData,
   });
 });
 
 // Dashboard endpoint
-app.get('/dashboard', (req, res) => {
+app.get('/api/dashboard', (req, res) => {
   res.json({
     metrics: {
       views: { value: '24.5K', change: '+18%', positive: true },
@@ -139,7 +226,7 @@ app.get('/dashboard', (req, res) => {
 });
 
 // Ideas generation endpoint
-app.post('/ideas/generate', (req, res) => {
+app.post('/api/ideas/generate', (req, res) => {
   const { businessType, industry, goals, platforms } = req.body;
   
   // Generate AI-powered content ideas based on business info
@@ -189,7 +276,7 @@ app.post('/ideas/generate', (req, res) => {
 });
 
 // Analyze endpoint
-app.post('/analyze', (req, res) => {
+app.post('/api/analyze', (req, res) => {
   const { platform, contentType, contentUrl } = req.body;
   
   const platformAnalysis = {
@@ -242,7 +329,7 @@ app.post('/analyze', (req, res) => {
 });
 
 // Schedule endpoint
-app.post('/schedule', (req, res) => {
+app.post('/api/schedule', (req, res) => {
   const { postId, scheduledTime, platform, content } = req.body;
   
   res.json({
@@ -258,7 +345,7 @@ app.post('/schedule', (req, res) => {
 });
 
 // Create content endpoint
-app.post('/create', (req, res) => {
+app.post('/api/create', (req, res) => {
   const { contentType, brandProfile, prompt } = req.body;
   
   // Simulate AI content creation
