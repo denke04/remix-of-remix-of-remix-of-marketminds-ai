@@ -5,15 +5,17 @@ This repository contains a complete MarketMinds AI application with a React fron
 
 ## Architecture
 - **Frontend**: React + Vite + TypeScript + Tailwind CSS + shadcn/ui
-- **Backend**: Node.js + Express (Mock API for development)
+- **Backend**: Node.js + Express + Supabase
 - **State Management**: React Context API
 - **API Client**: Native Fetch API
+- **Database**: Supabase (PostgreSQL)
 
 ## Getting Started
 
 ### Prerequisites
 - Node.js 18+ 
 - npm or yarn
+- (Optional) Supabase account for database persistence
 
 ### Installation
 
@@ -28,6 +30,22 @@ cd server
 npm install
 cd ..
 ```
+
+3. **Configure Supabase (Optional)**:
+   - Create a Supabase project at https://supabase.com
+   - Create a `users` table with the following schema:
+     - `id` (uuid, primary key, default: `gen_random_uuid()`)
+     - `email` (text, unique, not null)
+     - `businessName` (text)
+     - `industry` (text)
+     - `goals` (text[] or jsonb)
+     - `platforms` (text[] or jsonb)
+     - `experience` (text)
+     - `teamSize` (text)
+   - Copy `server/.env.example` to `server/.env`
+   - Fill in your Supabase URL and anon key in `server/.env`
+   
+   Note: The backend will work without Supabase configuration, but onboarding data won't be persisted.
 
 ### Running the Application
 
@@ -58,22 +76,27 @@ The frontend will run on `http://localhost:8080` (or the next available port)
 
 ## API Endpoints
 
+All endpoints are prefixed with `/api`.
+
 ### Authentication
-- `POST /auth/register` - Create new user account
-- `POST /auth/login` - Login existing user
+- `POST /api/auth/register` - Create new user account
+- `POST /api/auth/login` - Login existing user
 
 ### User Management
-- `POST /onboarding` - Save user's business information
+- `POST /api/onboarding` - Save user's business information to Supabase (requires authentication)
+  - Extracts user email from JWT token
+  - Saves onboarding data: businessName, industry, goals, platforms, experience, teamSize
+  - Returns error if not authenticated
 
 ### Features
-- `GET /dashboard` - Fetch dashboard metrics and insights
-- `POST /ideas/generate` - Generate content ideas based on business
-- `POST /analyze` - Analyze content for platform optimization
-- `POST /schedule` - Schedule posts for publishing
-- `POST /create` - Create content with AI assistance
+- `GET /api/dashboard` - Fetch dashboard metrics and insights
+- `POST /api/ideas/generate` - Generate content ideas based on business
+- `POST /api/analyze` - Analyze content for platform optimization
+- `POST /api/schedule` - Schedule posts for publishing
+- `POST /api/create` - Create content with AI assistance
 
 ### Health Check
-- `GET /health` - Check API status
+- `GET /api/health` - Check API status
 
 ## Project Structure
 
@@ -94,36 +117,38 @@ The frontend will run on `http://localhost:8080` (or the next available port)
 
 ### ✅ Implemented
 - User authentication (signup/login)
-- 6-step business onboarding
+- 6-step business onboarding with Supabase persistence
 - Personalized dashboard with metrics
 - AI content idea generation
 - Content analysis with platform-specific tips
 - Toast notifications for feedback
 - Loading states throughout the app
 - Error handling and user feedback
+- Supabase integration for onboarding data persistence
 
 ### 🚧 Mock/Demo Features
 - Schedule page (UI only, API ready)
 - Create page (UI only, API ready)
-- In-memory data storage (resets on server restart)
-- Simple token-based authentication
+- In-memory authentication storage (for development, resets on server restart)
+- Dashboard metrics (mock data)
 
 ## Development Notes
 
-### Backend (Mock API)
-The backend server in `/server` is a simple Express application designed for development and demonstration purposes:
-- Uses in-memory storage (data is lost on restart)
-- No password hashing (uses plain text comparison)
-- Unrestricted CORS (allows all origins)
-- Simple token generation (not cryptographically secure)
+### Backend
+The backend server in `/server` is an Express application with Supabase integration:
+- **Authentication**: Uses in-memory token storage for development (for simplicity)
+- **Onboarding Data**: Persisted to Supabase when configured, otherwise falls back to demo mode
+- **Supabase Integration**: Optional - server works without it but onboarding data won't persist
+- **CORS**: Unrestricted (allows all origins) for development
+- **Token-based Auth**: Simple token generation for demo purposes
 
-**⚠️ This backend is NOT production-ready.** For production use, you would need:
-- Proper database (PostgreSQL, MongoDB, etc.)
+**⚠️ This backend requires additional security for production:**
 - Password hashing with bcrypt
-- JWT-based authentication
+- JWT-based authentication with proper signing
 - Restricted CORS policy
 - Environment-based configuration
 - Rate limiting and security middleware
+- Proper session management
 
 ### Frontend
 The frontend is production-ready but the API base URL is hardcoded to `localhost:8000`. For production:
