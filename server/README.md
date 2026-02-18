@@ -38,19 +38,36 @@ CREATE TABLE users (
 -- Create index on email for faster lookups
 CREATE INDEX users_email_idx ON users(email);
 
--- Enable Row Level Security (RLS)
+-- Note: For server-side operations using the anon key, you have two options:
+-- Option 1: Disable RLS for this table (simpler for development)
+-- The server will handle authorization at the application level
+
+-- Option 2: Enable RLS with policies that allow service operations
+-- This is more secure but requires proper JWT handling
+
+-- For development/demo, we recommend Option 1:
+-- ALTER TABLE users DISABLE ROW LEVEL SECURITY;
+
+-- For production with proper Supabase Auth integration, use Option 2:
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
--- Create policy to allow authenticated users to insert/update their own data
-CREATE POLICY "Users can insert their own data" ON users
-  FOR INSERT WITH CHECK (auth.uid()::text = id::text);
+-- Allow all operations for authenticated users on their own email
+CREATE POLICY "Users can manage their own data" ON users
+  FOR ALL 
+  USING (email = current_setting('request.jwt.claims', true)::json->>'email')
+  WITH CHECK (email = current_setting('request.jwt.claims', true)::json->>'email');
 
-CREATE POLICY "Users can update their own data" ON users
-  FOR UPDATE USING (auth.uid()::text = id::text);
-
-CREATE POLICY "Users can read their own data" ON users
-  FOR SELECT USING (auth.uid()::text = id::text);
+-- Alternative: Allow service role to bypass RLS
+-- CREATE POLICY "Service role can manage all data" ON users
+--   FOR ALL 
+--   USING (auth.role() = 'service_role')
+--   WITH CHECK (auth.role() = 'service_role');
 ```
+
+**Important Notes:**
+- If RLS is enabled, ensure your server uses a valid Supabase auth token or the service role key
+- For development without proper auth, you can disable RLS on the users table
+- The current implementation uses the anon key, which works best with RLS disabled or with policies that check email from JWT claims
 
 #### Configure Environment Variables
 
@@ -62,11 +79,16 @@ CREATE POLICY "Users can read their own data" ON users
 2. Fill in your Supabase credentials in `.env`:
    - Get your project URL from Supabase project settings
    - Get your anon key from Supabase project settings > API
+   - **For production**: Consider using the service_role key instead of anon key for server-side operations
 
 ```env
 SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_ANON_KEY=your-anon-key-or-service-role-key
 ```
+
+**Key Selection:**
+- **Anon Key**: Use with RLS disabled or with proper JWT token forwarding
+- **Service Role Key**: Bypasses RLS, use for trusted server-side operations (recommended for this use case)
 
 ### 3. Run the Server
 

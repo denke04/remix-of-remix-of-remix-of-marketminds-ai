@@ -21,8 +21,8 @@ app.use(express.json());
 const users = new Map();
 const sessions = new Map();
 
-// Auth middleware to extract user from token
-const authenticateUser = async (req, res, next) => {
+// Middleware to extract user from token (optional - doesn't block requests)
+const extractUserFromToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.substring(7);
@@ -56,7 +56,7 @@ const authenticateUser = async (req, res, next) => {
   next();
 };
 
-app.use(authenticateUser);
+app.use(extractUserFromToken);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -127,13 +127,17 @@ app.post('/api/onboarding', async (req, res) => {
     });
   }
   
+  // Validate and ensure arrays
+  const goalsArray = Array.isArray(goals) ? goals : [];
+  const platformsArray = Array.isArray(platforms) ? platforms : [];
+  
   // Prepare data for Supabase
   const userData = {
     email: userEmail,
     businessName,
     industry,
-    goals,
-    platforms,
+    goals: goalsArray,
+    platforms: platformsArray,
     experience,
     teamSize,
   };
